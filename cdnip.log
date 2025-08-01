@@ -1,0 +1,39 @@
+[Fri Aug  1 19:21:23 CST 2025] 脚本开始执行
+bash: cdnac.sh: No such file or directory
+Cloudflare账号登陆成功!
+当前工作模式为ipv4
+Command failed: ubus call service delete { "name": "v2raya" } (Not found)
+已停止v2raya
+cdnip.sh: line 145: ./cfst: No such file or directory
+测速完毕
+Command failed: ubus call service delete { "name": "v2raya" } (Not found)
+已重启v2raya
+请稍等30秒
+正在更新解析：多个优选IP解析到一个域名。请稍后...
+成功删除 DNS 记录：cdn1.feiyuege.eu.org
+成功删除 DNS 记录：cdn1.feiyuege.eu.org
+成功删除 DNS 记录：cdn1.feiyuege.eu.org
+成功删除 DNS 记录：cdn1.feiyuege.eu.org
+成功删除 DNS 记录：cdn1.feiyuege.eu.org
+成功删除 DNS 记录：cdn1.feiyuege.eu.org
+成功删除 DNS 记录：cdn1.feiyuege.eu.org
+成功删除 DNS 记录：cdn1.feiyuege.eu.org
+成功删除 DNS 记录：cdn1.feiyuege.eu.org
+成功删除 DNS 记录：cdn1.feiyuege.eu.org
+IP地址 104.16.155.19 成功解析到 cdn1.feiyuege.eu.org
+IP地址 104.16.151.24 成功解析到 cdn1.feiyuege.eu.org
+IP地址 104.18.145.55 成功解析到 cdn1.feiyuege.eu.org
+IP地址 104.16.158.58 成功解析到 cdn1.feiyuege.eu.org
+IP地址 104.18.148.136 成功解析到 cdn1.feiyuege.eu.org
+IP地址 104.16.153.66 成功解析到 cdn1.feiyuege.eu.org
+IP地址 104.16.156.164 成功解析到 cdn1.feiyuege.eu.org
+IP地址 104.25.254.40 成功解析到 cdn1.feiyuege.eu.org
+IP地址 104.16.157.234 成功解析到 cdn1.feiyuege.eu.org
+IP地址 104.16.144.45 成功解析到 cdn1.feiyuege.eu.org
+bash: cdnac.sh: No such file or directory
+未配置TG推送
+未配置PushPlus推送
+
+切记：在软路由-计划任务选项中，加入优选IP自动执行时间的cron表达式
+比如每天早上三点执行：0 3 * * * cd /root/feiyuege/ && bash cdnip.sh
+
