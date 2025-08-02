@@ -1,0 +1,9 @@
+[Fri Aug  1 09:22:05 CST 2025] 脚本开始执行
+下载更新反代IP库txt.zip文件……
+#=O#- #                                                                                                  ##O=#   #                                                                                                #=#=-#   #                                                                                               -#O#-  #   #                                                                                             -=#=#   #    #                                                                                           -=O#- #   #     #                                                                                        -=O=#   #   #     #                                                                                      curl: (35) ssl_handshake returned: (-0x7280) SSL - The connection indicated an EOF
+
+下载失败，继续使用之前的反代IP库
+反代IP库txt.zip文件下载失败
+Cloudflare账号登陆失败，尝试重连 (1/5)...
+Cloudflare账号登陆失败，尝试重连 (2/5)...
+Cloudflare账号登陆失败，尝试重连 (3/5)...
