@@ -1,4 +1,25 @@
 #!/bin/bash
+
+# 定义下载URL
+URL="https://raw.githubusercontent.com/tianshipapa/cfipcaiji/refs/heads/main/ip.txt"
+
+# 获取当前目录路径
+CURRENT_DIR=$(pwd)
+TARGET_FILE="${CURRENT_DIR}/ip.txt"
+
+# 下载文件到当前目录
+if wget -q --timeout=10 --tries=2 -O "$TARGET_FILE" "$URL"; then
+    echo "文件已下载到当前目录: ${TARGET_FILE}"
+    chmod 644 "$TARGET_FILE"  # 设置适当权限
+ #   exit 0
+else
+    echo "下载失败，请检查:"
+    echo "1. 网络连接"
+    echo "2. URL有效性: ${URL}"
+    rm -f "$TARGET_FILE"  # 清理可能的部分下载
+    exit 1
+fi
+
 export LANG=en_US.UTF-8
 point=443
 IP_ADDR=ipv4
@@ -294,4 +315,54 @@ echo
 echo "切记：在软路由-计划任务选项中，加入优选IP自动执行时间的cron表达式"
 echo "比如每天早上三点执行：0 3 * * * cd /root/cfipopw/ && bash cdnip.sh"
 echo
+
+# 配置参数
+INPUT_FILE="result.csv"
+OUTPUT_DIR="/root/feiyuege"
+OUTPUT_FILE="${OUTPUT_DIR}/formatted_result.txt"
+
+# 创建输出目录
+mkdir -p "$OUTPUT_DIR" || {
+    echo "错误: 无法创建目录 $OUTPUT_DIR" >&2
+    exit 1
+}
+
+# 检查输入文件
+if [ ! -f "$INPUT_FILE" ]; then
+    echo "错误: 输入文件 $INPUT_FILE 不存在" >&2
+    exit 1
+fi
+
+# 处理CSV文件
+awk -F',' '{
+    if(NR>1 && $1 && $NF) {  # 跳过标题行并检查字段
+        gsub(/[[:space:]]/, "", $1)  # 清理IP地址
+        print $1":443#"$NF  # 格式化为ip:443#最后字段
+    }
+}' "$INPUT_FILE" > "$OUTPUT_FILE"
+
+# 验证结果
+if [ -s "$OUTPUT_FILE" ]; then
+    echo "成功处理 $(wc -l < "$OUTPUT_FILE") 条记录"
+    echo "输出文件: $OUTPUT_FILE"
+    chmod 644 "$OUTPUT_FILE"
+ #   exit 0
+else
+    echo "错误: 未生成有效数据" >&2
+    rm -f "$OUTPUT_FILE"
+    exit 1
+fi
+
+# 进入目标文件夹
+cd /root/feiyuege/
+
+# 检查文件夹中的文件（确认ceshi.txt已存在）
+ls -l
+TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+# 执行Git操作
+GIT_SSH_COMMAND="ssh -i ~/.ssh/id_ed25519" git pull origin main --rebase
+GIT_SSH_COMMAND="ssh -i ~/.ssh/id_ed25519" git add .
+GIT_SSH_COMMAND="ssh -i ~/.ssh/id_ed25519" git commit -m "[$TIMESTAMP] $commit_message"
+GIT_SSH_COMMAND="ssh -i ~/.ssh/id_ed25519" git push --force origin main
+
 exit
