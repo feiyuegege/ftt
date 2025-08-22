@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 定义下载URL
-URL="https://raw.githubusercontent.com/tianshipapa/cfipcaiji/refs/heads/main/ip.txt"
+URL="https://ipdb.api.030101.xyz/?type=proxy"
 
 # 获取当前目录路径
 CURRENT_DIR=$(pwd)
