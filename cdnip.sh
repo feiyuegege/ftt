@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 定义下载URL
-URL="https://ipdb.api.030101.xyz/?type=proxy"
+URL="https://ipdb.api.030101.xyz/?type=cfv4"
 
 # 获取当前目录路径
 CURRENT_DIR=$(pwd)
