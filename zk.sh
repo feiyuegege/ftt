@@ -36,13 +36,6 @@ cd /root/v4/ &&bash clip.sh && echo "成功" || {
     exit 1
 }
 
-# 步骤6：执行第六个前置脚本（上传git库）
-echo -n "2. 执行前置脚本6（sc.sh）..."
-cd /root/v4/ &&bash sc.sh && echo "成功" || {
-    echo "失败！"
-    exit 1
-}
-
 # 步骤7：执行第七个前置脚本（ip筛选）
 echo -n "2. 执行前置脚本7（ip.sh）..."
 cd /root/v6/ &&bash ip.sh -d && echo "成功" || {
@@ -66,7 +59,7 @@ cd /root/v6/ &&bash clip.sh && echo "成功" || {
 
 # 步骤10：执行第十个前置脚本（上传git库）
 echo -n "2. 执行前置脚本10（sc.sh）..."
-cd /root/v6/ &&bash sc.sh && echo "成功" || {
+cd /root/ &&bash sc.sh && echo "成功" || {
     echo "失败！"
     exit 1
 }
