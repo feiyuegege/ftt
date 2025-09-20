@@ -1,16 +1,16 @@
 #!/bin/bash
 
 # 配置参数
-IP_LIST_URL="https://ipdb.api.030101.xyz/?type=proxy"
-TARGET_COUNTRY="US"  # 国家代码
+IP_LIST_URL="https://raw.githubusercontent.com/feiyuegege/ftt/refs/heads/main/proxy.txt"
+TARGET_COUNTRY="US"  # 目标国家代码（如美国为US，中国为CN等）
 OUTPUT_FILE="/root/cfipopw/ip.txt"
-RESULT_FILE="/root/cfipopw/result.csv"  # 新增result.csv路径定义
+RESULT_FILE="/root/cfipopw/result.csv"  # 结果CSV文件路径
 TEMP_FILE=$(mktemp)
 BATCH_SIZE=100       # 每次批量查询的IP数量
 DEBUG=0              # 1=开启调试模式，0=关闭
-API_CHOICE=1         # 1=ip-api.com, 2=ipinfo.io批量API
+API_CHOICE=1         # 1=ip-api.com（支持代理检测），2=ipinfo.io（需自行配置token）
 DIRECT_SAVE=0        # 1=直接保存IP列表不查询，0=正常筛选模式
-FILTER_MODE="both"   # 筛选模式: c(仅国家), p(仅代理), b(两者都满足)
+FILTER_MODE="both"   # 筛选模式: country(仅国家), proxy(仅代理), both(两者都满足)
 
 # 显示帮助信息
 show_help() {
@@ -19,9 +19,9 @@ show_help() {
     echo "  -d    直接保存IP列表，不进行筛选"
     echo "  -h    显示帮助信息"
     echo "  -v    开启调试模式"
-    echo "  -c    仅筛选指定国家的IP"
+    echo "  -c    仅筛选指定国家的IP（默认国家：$TARGET_COUNTRY）"
     echo "  -p    仅筛选代理IP"
-    echo "  -b    筛选同时满足指定国家和代理的IP(默认)"
+    echo "  -b    筛选同时满足指定国家和代理的IP(默认模式)"
     echo
     echo "默认行为: 筛选来自$TARGET_COUNTRY且为代理的IP并保存到$OUTPUT_FILE"
 }
@@ -69,12 +69,12 @@ cleanup() {
     [ $DEBUG -eq 1 ] && echo "清理临时文件完成"
     exit 0
 }
-trap cleanup INT TERM EXIT
+trap cleanup INT TERM EXIT  # 捕获中断信号并执行清理
 
 # 检查必要工具
 check_dependencies() {
     local dependencies=("curl")
-    # 如果不是直接保存模式，还需要jq工具
+    # 如果不是直接保存模式，还需要jq工具解析JSON
     if [ $DIRECT_SAVE -eq 0 ]; then
         dependencies+=("jq")
     fi
@@ -87,7 +87,7 @@ check_dependencies() {
     done
 }
 
-# 获取IP列表
+# 获取IP列表并预处理
 fetch_ip_list() {
     echo "正在从 $IP_LIST_URL 获取IP列表..."
     if ! curl -s "$IP_LIST_URL" -o "$TEMP_FILE"; then
@@ -95,8 +95,8 @@ fetch_ip_list() {
         exit 1
     fi
     
-    # 去除空行和注释行
-    sed -i '/^#/d; /^$/d' "$TEMP_FILE"
+    # 去除空行、注释行和可能的回车符（\r）
+    sed -i '/^#/d; /^$/d; s/\r//g' "$TEMP_FILE"
     local ip_count=$(wc -l < "$TEMP_FILE")
     echo "成功获取 $ip_count 个IP地址"
     
@@ -105,9 +105,9 @@ fetch_ip_list() {
         exit 1
     fi
     
-    # 调试模式：显示前10个IP
+    # 调试模式：显示前10个IP验证格式
     if [ $DEBUG -eq 1 ]; then
-        echo "前10个IP地址示例："
+        echo "前10个IP地址示例（已清理）："
         head -n 10 "$TEMP_FILE"
     fi
     
@@ -119,7 +119,7 @@ fetch_ip_list() {
     fi
 }
 
-# 批量筛选IP
+# 批量筛选IP（核心功能）
 filter_ips() {
     # 根据筛选模式显示提示信息
     case $FILTER_MODE in
@@ -135,6 +135,8 @@ filter_ips() {
     esac
     
     > "$OUTPUT_FILE"  # 清空输出文件
+    > "$RESULT_FILE"  # 清空CSV结果文件
+    echo "query,countryCode,proxy" > "$RESULT_FILE"  # 写入CSV表头
     
     local total=$(wc -l < "$TEMP_FILE")
     local current=0
@@ -148,7 +150,7 @@ filter_ips() {
         
         # 当批次达到指定大小或处理完所有IP时，进行批量查询
         if [ ${#batch[@]} -ge $BATCH_SIZE ] || [ $current -eq $total ]; then
-            # 构建批量查询的JSON数据
+            # 构建批量查询的JSON数据（适配ip-api.com的批量格式）
             local json_data=$(printf '{"query":"%s"},' "${batch[@]}" | sed 's/,$//')
             local ip_list=$(IFS=,; echo "${batch[*]}")
             
@@ -158,15 +160,16 @@ filter_ips() {
                 echo "IP列表: $ip_list"
             fi
             
-            # 选择API进行查询（优先使用ip-api.com，支持代理检测）
+            # 调用IP查询API
+            local response
             if [ $API_CHOICE -eq 1 ]; then
-                # 增加proxy字段获取代理信息
-                local response=$(curl -s "http://ip-api.com/batch?fields=query,countryCode,proxy" \
+                # 使用ip-api.com（免费，支持代理检测）
+                response=$(curl -s "http://ip-api.com/batch?fields=query,countryCode,proxy" \
                     -H "Content-Type: application/json" \
                     -d "[$json_data]")
             else
-                # ipinfo.io批量查询（注：可能不支持代理检测，建议使用ip-api.com）
-                local response=$(curl -s "https://ipinfo.io/$ip_list?token=YOUR_TOKEN_HERE")
+                # 使用ipinfo.io（需替换YOUR_TOKEN_HERE为实际token，可能不支持代理检测）
+                response=$(curl -s "https://ipinfo.io/$ip_list?token=YOUR_TOKEN_HERE")
             fi
             
             # 调试模式：显示API响应
@@ -174,6 +177,9 @@ filter_ips() {
                 echo "API响应:"
                 echo "$response" | jq .
             fi
+            
+            # 将API返回结果写入CSV文件（用于后续分析）
+            echo "$response" | jq -r '.[] | [.query, .countryCode, .proxy] | @csv' >> "$RESULT_FILE"
             
             # 根据不同筛选模式构建jq筛选条件
             local jq_filter
@@ -192,18 +198,19 @@ filter_ips() {
             # 解析响应并提取符合条件的IP
             local batch_found=$(echo "$response" | jq -r "$jq_filter" | tee -a "$OUTPUT_FILE" | wc -l)
             found=$((found + batch_found))
-            echo -ne "处理中: $current/$total, 已找到: $found\r"
+            echo -ne "处理中: $current/$total, 已找到: $found\r"  # 实时显示进度
             
             # 清空当前批次
             batch=()
             
-            # 适当延迟，避免触发API限制
+            # 延迟1秒避免触发API频率限制
             sleep 1
         fi
     done < "$TEMP_FILE"
     
     echo -e "\n筛选完成，共找到 $found 个符合条件的IP地址"
     echo "结果已保存到 $OUTPUT_FILE"
+    echo "详细查询记录已保存到 $RESULT_FILE"
     
     # 显示部分结果用于验证
     if [ -s "$OUTPUT_FILE" ]; then
@@ -217,7 +224,7 @@ main() {
     parse_args "$@"
     check_dependencies
     
-    # 执行前清空两个文件
+    # 执行前清空输出文件
     > "$OUTPUT_FILE"
     > "$RESULT_FILE"
     [ $DEBUG -eq 1 ] && echo "已清空 $OUTPUT_FILE 和 $RESULT_FILE 原有内容"
@@ -226,4 +233,5 @@ main() {
     filter_ips
 }
 
+# 启动主流程
 main "$@"
